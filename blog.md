@@ -1,22 +1,17 @@
 # Introduction
-The two goals I had in mind when deciding to translate the from-scratch, Python implementation of BTC that Andrej Karpathy made are: to learn a new coding language, namely Go, and
-get a technical familiarity with Bitcoin.
+The two goals I had in mind when deciding to translate the from-scratch Python implementation of BTC that Andrej Karpathy made were: learning a new coding language, namely Go, and getting a technical familiarity with Bitcoin.
 
-With these goals established, please keep in mind this code won't be pretty, and will evolve over the course of this blog post. This blog post will highlight some of the challenges I faced
-when translating this code that I encountered and little nuggets of information I discovered along the way. I hope that whoever reads this learns something new.
+Please keep in mind that this code won't be pretty, and will evolve over the course of the blog post. I will be highlighting some of the challenges I faced when translating this code, and I will be sharing little nuggets of information discovered along the way. 
+
+I hope that whoever reads this learns something new.
 
 ## Part 1: Elliptic Curve Cryptography
 
-I followed along the blog post that Andrej Karpathy put together to translate this code so I will follow the order of his blog post in a similar fashion. This first thing we need
-to make a Bitcoin transaction is a set of private and public keys. Cryptography is quite a complex topic that I don't feel qualified to explain; all we need to know is that a private key is 
-a secret number that is should NEVER be shared as this number is used to mathematically prove ownership over your Bitcoin. A public key is a set of points, that are on a given elliptic curve
-and related to the private key. You derive a public key from a private key but it is incredibly difficult to do the reverse operation. This is the heart of security with modern cryptography.
+I followed along a blog post that Andrej Karpathy wrote while translating this code, so I will follow the order of his post in a similar fashion. 
 
-So to begin, Karpathy creates a class called `Curve` which has three arguments, `p`, `a` and `b`. He also adds a decorator to the class declartion `@dataclass`. In Go, there are no classes,
-the closest equivalent in Go is a `struct`. Something else to keep in mind is you cannot give a default value to a an argument in a `struct`. So we define the arguments of the struct in `main()`.
-Finally, go is a strictly typed language by design where as Python is dynamically typed. Large integers (larger than 64 bits) are supported within the `int` type. In Go, we must use the `math/big` module which offers
-a `big.Int` type to serve our needs here. `big.Int` methods return whatever the result is to the object that called the method itself and normally returns a point to a `big.Int` type, so our struct will
-want `*big.int` for the `p` argument. I added a print statement at the end of main just so go wouldn't complain about declaring `btc_curve` and not using it. 
+The first thing we need in order to make a Bitcoin transaction is a set of private and public keys. Cryptography is quite a complex topic that I don't feel qualified explaining, but all we need to know is that a private key is a secret number that should NEVER be shared. This number is used to mathematically prove ownership over your Bitcoin. A public key is a set of points, that are on a given elliptic curve and related to the private key. You derive a public key from a private key but it is incredibly difficult to do the reverse operation. This is the heart of modern cryptography security.
+
+So to begin, Karpathy creates a class called `Curve` which has three arguments, `p`, `a` and `b`. He also adds a decorator to the class declartion `@dataclass`. In Go, there are no classes, and the closest equivalent is a `struct`. Something else to keep in mind is you cannot give a default value to an argument in a `struct`. So we define the arguments of the struct in `main()`. Finally, Go is a strictly typed language by design where as Python is dynamically typed. Large integers (larger than 64 bits) are supported within the `int` type. In Go, we must use the `math/big` module which offers a `big.Int` type to serve our needs here. `big.Int` methods return whatever the result is to the object that called the method. `big.Int` methods normally return a pointer to a `big.Int` type, so the `p` attribute of our struct will be of `*big.int` type. I added a print statement at the end of main so the Go compiler wouldn't complain about declaring `btc_curve` and not using it. 
 
 ```
 package main
@@ -67,7 +62,7 @@ func (p Point) verify_on_curve(curve *Curve) bool {
 	return mod.Cmp(big.NewInt(0)) == 0
 }
 ```
-Something worth mentionning about functions/methods in Go. As it is strictly typed, you have to define the types for any input arguments as well as all output values. To make a function a method of a specific struct, you have to include the equivalent of `self` in Python before the method name. In the example above, the function becomes a method with `(p Point)` which tells Go "This funciton is a method of Point". 
+ As Go is strictly typed, something worth mentioning about functions/methods is having to define the types for input arguments as well as all output values. To make a function a method of a specific struct, you must also include the equivalent of `self` before the method name. In the example above, the function becomes a method with `(p Point)` which tells Go "This funciton is a method of Point". 
 
 Also, as I pointed out earlier, `big.Int` operations return the value to the `big.Int` that called the method unlike normal math operations, where the result can be stored in a new variable via assignment (ex: `a := 4+7`).
 ```
@@ -146,11 +141,11 @@ func main() {
 	fmt.Println(priv_key)
 }
 ```
-And with that we've created our private key. Notice that we can't use standard go comparison operators between `big.Int` types. Instead, the `.Cmp()` method is provided. Also notice that no matter how many times we run this script, the private key doesn't change. They are deterministically derived, in this case from the phrase "btc is the future". This would not be a strong phrase for a private key. Most well built Bitcoin wallets generate a list of 12-24 words from 1024 possible choices which are then used to derive the private key. This is a very secure method of deriving a private key as each combination of 12-24 words are one in 12^1014 - 24^1024 possibilites (well not quite as there should not be any repeating words and the last worm is a checksum and not random). But this will suit our purposes just fine.
+And with that we've created our private key. Notice that we can't use standard Go comparison operators between `big.Int` types. Instead, the `.Cmp()` method is provided. Also notice that no matter how many times we run this script, the private key doesn't change. They are deterministically derived  (in this case from the phrase "btc is the future"). This would not be a strong phrase for a private key. Most well built Bitcoin wallets generate a list of 12-24 words from 1024 possible choices which are then used to derive the private key. This is a very secure method of deriving a private key as each combination of 12-24 words are one in 12^1014 - 24^1024 possibilites (well not quite as there should not be any repeating words and the last word is a checksum). But this will suit our purposes just fine.
 
-Now to create the public key, we have to add the Generator point to itself private key number of times. But this isn't a simple multiplication as a point has an x and y value, the private key is just a large integer. It also isn't like multiplying a vector by a scalar. It wouldn't be much of a secret key if you could just divide the public key by the generator point and get a private key. So we now create a set of functions to perform this special operation.
+Now, to create the public key we have to add the Generator point to itself private key number of times. But this isn't a simple multiplication as a point has an x and y value, the private key is just a large integer. It also isn't like multiplying a vector by a scalar. It wouldn't be much of a secret key if you could just divide the public key by the generator point and get a private key. We now create a set of functions to perform this special operation.
 
-We define a point called `INF` which is meant to be like a point at infinity. In Python, this point is defined using the `None` type to which there is no equivalent in Go. I first tried defining `INF` as `new(Point)`. From what I read on instantiating a variable but not assigning it a value in Go, the variable automatically assumes a default value of `0` or `""` or `false`. I'm not sure if this is the case for `big.Int` and so I, instead, manually defined zero values for our `INF` point.
+We define a point called `INF` which is meant to be like a point at infinity. In Python, this point is defined using the `None` type to which there is no equivalent in Go. I first tried defining `INF` as `new(Point)`. From what I read on instantiating a variable but not assigning it a value in Go, the variable automatically assumes a default value of `0` or `""` or `false`. I'm not sure if this is the case for `big.Int` and so, I instead manually defined zero values for our `INF` point.
 ```
 var INF = Point{
 	curve: Curve{
@@ -162,7 +157,7 @@ var INF = Point{
 	y: big.NewInt(0),
 }
 ```
-Here are the functions necessary for adding a scalar to a point in the realm of cryptography. I won't pretend to understand what's going on here so instead I'll mention the difficulties I encountered relative to implementing it in Go. I created a `Compare` method for `Point` structs because by default in Python, you're able to compare objects of the same class using standard Python operators thanks to Dunder methods like `__eq__()`. This is not the case in Go, so I created a `Compare` method which compares all attributes of point `p` to the attributes of `other_p`. If there are any differences, the method returns `false`.   
+Here are the functions necessary for adding a scalar to a point in the realm of cryptography. I won't pretend to understand what's going on here so instead I'll mention the difficulties I encountered when implementing it in Go. I created a `Compare` method for `Point` structs because in Python, by default, you're able to compare objects of the same class using standard operators. This is thanks to Dunder methods like `__eq__()`. Go does not have Dunder methods, so I created a `Compare` method which compares all attributes of point `p` to the attributes of `other_p`. If there are any differences, the method returns `false`.   
 ```
 func extended_euclidean_algorithm(a *big.Int, b *big.Int) (old_r *big.Int, old_s *big.Int, old_t *big.Int) {
 	old_r, r := new(big.Int), new(big.Int)
@@ -282,7 +277,7 @@ To test if this was properly implemented, we can try adding private keys with va
 	fmt.Printf("pk_three: %v\n", pk_three)
 ```
 
-Now as you may have noticed, private keys are normally very large integers and manually writing out `elliptic_curve_addition()` private key number of times could be long if not impossible. So we will write a short cut that in Python would override the `__mul__()` Dunder method but in Go will just be another `Point` method.
+Now, as you may have noticed, private keys are normally very large integers and manually writing out `elliptic_curve_addition()` private key number of times could be long if not impossible. So we will write a short cut that in Python would override the `__mul__()` Dunder method but in Go will just be another `Point` method.
 
 ```
 func (p Point) double_and_add(k *big.Int) Point {
@@ -312,7 +307,7 @@ And finally we can test if the public key created from our private key is on the
 	fmt.Printf("x: %v\ny: %v\n", pub_key.x, pub_key.y)
 	fmt.Printf("Pub_key is on curve? %v\n", pub_key.verify_on_curve(&btc_curve))
 ```
-To use `double_and_add()` I first create a copy of the private key. This is because otherwise, `double_and_add()` modifies the value of the input argument provided with this line of code `k.Rsh(k, 1)`. This was something that I missed and it would later haunt me when I tried using the private key to sign the Bitcoin transaction and then constantly got an error message when trying to broadcast it.
+To use `double_and_add()` I first create a copy of the private key. The copy is necessary because `double_and_add()` would otherwise modify the value of the input argument provided with this line of code: `k.Rsh(k, 1)`. This was something that I missed and it would later haunt me while trying to use the private key to sign the Bitcoin transaction.
 
 Now you'll notice that a public key does not at all look like a Bitcoin address. For that we need a couple more cryptographic tools. Namely, the SHA256 algorithm and the RIPEMD160 algorithm.
 
@@ -532,11 +527,11 @@ func sha256(b []byte) []byte {
 	return res
 }
 ```
-Here is where I'd say things started really clicking for me about how to properly use `math/big` properly. By that I mean creating temporary variables to store operations results in large equations as well as making sure that functions don't modify input arguments directly. One noteable mistake I had made when translating this algorithm was when I initially assigned values to `a`, `b`, `c`, `d`, `e`, `f`, `g` and `h`. I had written this line of code `a, b, c, d, e, f, g, h := new(big.Int).Set(H[0]), new(big.Int).Set(H[1]), new(big.Int).Set(H[2]), new(big.Int).Set(H[3]), new(big.Int).Set(H[4]), new(big.Int).Set(H[5]), new(big.Int).Set(H[6]), new(big.Int).Set(H[7])` as `a, b, c, d, e, f, g, h := H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]`. This basically made `a b c d e f g h` pointers to the values stored in the `H` array instead of copying the values and creating separate addresses in memory, which caused the hashes to be completely wrong. This makes sense when you actually look at the `genH()` function and see it returns `[8]*big.Int` which is an array of pointers. 
+Here is where I'd say things started really clicking for me about how to properly use `math/big`. By that I mean creating temporary variables to store operation results in large equations as well as making sure that functions don't modify input arguments directly. One noteable mistake I had made when translating this algorithm was when I initially assigned values to `a`, `b`, `c`, `d`, `e`, `f`, `g` and `h`. I had written this line of code: `a, b, c, d, e, f, g, h := new(big.Int).Set(H[0]), new(big.Int).Set(H[1]), new(big.Int).Set(H[2]), new(big.Int).Set(H[3]), new(big.Int).Set(H[4]), new(big.Int).Set(H[5]), new(big.Int).Set(H[6]), new(big.Int).Set(H[7])` as `a, b, c, d, e, f, g, h := H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]`. This basically made `a b c d e f g h` pointers to the values stored in the `H` array instead of copying the values and creating separate addresses in memory. This mistake caused the hashes to be completely wrong. When you actually look at the `genH()` function and see it returns `[8]*big.Int` which is an array of pointers, this makes sense. 
 
 I found that the best way to debug in Go, especially with `big.Int` data types was to just add print statements throughout my code instead of using my IDE's debugger tool. Adding `big.Int` variables to the watch list won't display the actual value of the variable but instead only it's size and what memory addresses it occupies. At least that is the case in VSCode.  
 
-I added`"bytes"` and `"encoding/hex"` packages to the import statement at the top of the file and the following lines to `main()` to test if I had successfully implemented `sha256()`
+I added `"bytes"` and `"encoding/hex"` packages to the import statement at the top of the file and the following lines to `main()` to test if I had successfully implemented `sha256()`
 ```
 	mt_hash := sha256([]byte(""))
 	encodedStr := hex.EncodeToString(mt_hash)
@@ -916,7 +911,7 @@ func ripemd160(b []byte) []byte {
 	return in_ripemd160(b)
 }
 ```
-With `ripemd160()`, I decided to implement the helper functions as private functions within `ripemd160()`. While implementing this function, I learned alot about static typing. I had initially just used whatever integer type came to mind but I encountered many errors while going from bytes to ints and vice versa. I also learned that Python and Go have implemented a different version of the modulus operation by default which lead to some errors. I added the `modLikePython()` function based on [this article](https://stackoverflow.com/questions/43018206/modulo-of-negative-integers-in-go) to compensate for this discrepancy.
+With `ripemd160()`, I decided to implement the helper functions as private functions within `ripemd160()`. While implementing this function, I learned alot about static typing. I had initially just used whatever integer type came to mind, but I encountered many errors while going from bytes to ints and vice versa. I also learned that Python and Go have implemented a different version of the modulus operation by default, which lead to some errors. I added the `modLikePython()` function based on [this article](https://stackoverflow.com/questions/43018206/modulo-of-negative-integers-in-go) to compensate for this discrepancy.
 
 Here are the tests I added to `main()` to test `ripemd160()`. Don't forget to add `"encoding/binary"` and `"math"` to the import statement.
 ```
@@ -925,7 +920,7 @@ Here are the tests I added to `main()` to test `ripemd160()`. Don't forget to ad
 	fmt.Printf("%s\n", test_hex)
 	fmt.Printf("number of bytes in a RIPEMD-160 digest: %v\n", len(ripemd160([]byte(""))))
 ```
-The next thing on the to-do list is to create the `PublicKey` struct. In Python, this is a child of the `Point` class but there is no concept of inheritance in Go. Instead, Go has composition where structs can extend the functionality of other structs. This is what I did for the `PublicKey` struct.
+The next thing on the to-do list was to create the `PublicKey` struct. In Python, this is a child of the `Point` class but there is no concept of inheritance in Go. Instead, Go has composition where structs can extend the functionality of other structs. This is what I did for the `PublicKey` struct.
 
 ```
 type PublicKey struct {
@@ -960,7 +955,7 @@ func (pub PublicKey) encode(compressed, hash160 bool) []byte {
 	return pkb
 }
 ```
-At this point, I think it's worth mentionning that Go has two different array-like data structures. One is an array, which acts as you would expect, the other is a slice which acts more like a list in Python. It's a lightweight, extensible array like structure. This is something that I could've been more strict about when translating this code. There are a few instances where I either knew or could've known what the expected size of the array structure was and could've used a proper array in Go as opposed to a slice. This would make the code more robust and resiliant to errors. But as this is a purely educational implementation of Bitcoin, I won't dwell on this too much.
+At this point, I think it's worth mentionning that Go has two different array-like data structures. One is an array, which acts as you would expect; the other is a slice which acts more like a list in Python. It's a lightweight, extensible array-like structure. This is something that I could've been more strict about using when translating this code. There are a few instances where I either knew or could've known what the expected size of the array structure was and could've used a proper array in Go as opposed to a slice. This would make the code more robust and resiliant to errors. But as this is a purely educational implementation of Bitcoin, I won't dwell on this too much.
 
 Finally, the `b58encode()` and `address` methods were implemented
 ```
@@ -1008,9 +1003,9 @@ func (pub PublicKey) address(net string, compressed bool) string {
 	return b58encode(byte_address)
 }
 ```
-In Python, `[::-1]` is used to reverse the order of the indices in an array or list. There is no such function by default in Go so I created a `reverse()` function which will also come in handy when creating a txid. Here, I also learned about the Go equivalent of a Python dictionary, or at least the closest thing to one: the `map` type.
+In Python, `[::-1]` is used to reverse the order of the indices in an array or list. There is no such function by default in Go so I created a `reverse()` function (which came in handy when creating a txid). Here, I also learned about the Go equivalent of a Python dictionary, or at least the closest thing to one: the `map` type.
 
-And finally here is the additions to `main()` to finally get our bitcoin address. Add `"reflect"` and `"strings"` packages to the import statement as well.
+And finally here is the additions to `main()` to at last get our bitcoin address. Add `"reflect"` and `"strings"` packages to the import statement as well.
 ```
 	PubKey := PublicKey{
 		Point: pub_key,
@@ -1020,7 +1015,7 @@ And finally here is the additions to `main()` to finally get our bitcoin address
 ```
 ## Part 2: Building a Bitcoin Transaction
 
-[Here](https://blockstream.info/testnet/tx/65d9d108407bc588ac0c6ee17029f261cd7f9c66edacb579bac86a04f8d3cb4a) we can see our first transaction which is requesting tBTC from a Testnet faucet. We can finally start doing some more interesting things in our from scratch Bitcoin build. First we will add a few lines to `main()` to create a second Bitcoin wallet which we will send some funds to.
+[Here](https://blockstream.info/testnet/tx/65d9d108407bc588ac0c6ee17029f261cd7f9c66edacb579bac86a04f8d3cb4a) we can see our first transaction to our newly created Bitcoin address: requesting tBTC from a Testnet faucet. We can finally start doing some more interesting things in our from-scratch Bitcoin build. First we will add a few lines to `main()` to create a second Bitcoin address which we will send funds to.
 ```
 	priv_key2 := new(big.Int)
 	priv_key2.SetBytes([]byte("eth is a shitcoin"))
@@ -1032,7 +1027,7 @@ And finally here is the additions to `main()` to finally get our bitcoin address
 	address2 := PubKey2.address("test", true)
 	fmt.Println(address2)
 ```
-We can check if either Bitcoin addresses are actually valid by typing them into a testnet bitcoin block explorer and seeing if a page appears. The goal is to create a Bitcoin transaction which sends funds from the first bitcoin wallet we created to the second. For this we start by creating a `TxIn` and a `TxOut` struct
+We can check if either Bitcoin addresses are actually valid by typing them into a testnet bitcoin block explorer and seeing if a page appears. The goal is to create a Bitcoin transaction which sends funds from the first bitcoin wallet we created to the second. For this we start by creating a `TxIn` struct and a `TxOut` struct
 ```
 type TxIn struct {
 	prev_tx               []byte
@@ -1047,13 +1042,13 @@ type TxOut struct {
 	script_pubkey Script
 }
 ```
-To stop the Go compiler from yelling at us, saying "Hey what is this Script type you speak of?", we will also create that. In Python, the `Script` class has an attribute called `cmds` which is a union of both `int` and `bytes` types. I learned that in Go, there are no native `union` types. As a substitute, Go has an `interface` type. `Interfaces` are defined as any data type which have all of the methods listed in the `interface` definition statement. For example, the `Script` interface below
+To stop the Go compiler from yelling: "Hey what is this Script type you speak of?", we will need to create it. In Python, the `Script` class has an attribute called `cmds` which is a union of both `int` and `bytes` types. I learned that in Go, there are no native `union` types. As a substitute, Go has an `interface` type. Interfaces are defined as any data type which have all of the methods listed in the `interface` definition statement. For example, the `Script` interface below
 ```
 type Script interface {
 	ScriptEncode() []byte
 }
 ```
-is any data type that has a method called `ScriptEncode()`. If, for example, a struct had a method called `ScriptEncode()` but also had another method called `foo()`, that struct would still be a member of the `Script` type. I created `ByteScript` and `IntScript` structs and created implementations of `ScriptEncode()` for both of these structs which use a version of `cmds` that is a byte slice and another that is an int slice respectively.
+is any data type that has a method called `ScriptEncode()`, which takes no input arguments and returns a byte slice. If, for example, a struct had a method called `ScriptEncode()` but also had another method called `foo()`, that struct would still be a member of the `Script` type. I created `ByteScript` and `IntScript` structs and created implementations of `ScriptEncode()` for both of these structs which use a version of `cmds` that is a byte slice and another that is an int slice.
 ```
 type ByteScript struct {
 	cmds []byte
@@ -1085,7 +1080,7 @@ func (s IntScript) ScriptEncode() []byte {
 	return ret
 }
 ```
-So I used the `interface` data structure to circumvent the lack of `union` in Go. I also created a `NewTxIn()` constructor method for the `TxIn` struct since by default, the `sequence` attribute of `TxIn` has a default value.
+So I used the `interface` data structure to circumvent the lack of `union` in Go. I also created a `NewTxIn()` constructor method for the `TxIn` struct since the `sequence` attribute of `TxIn` has a default value.
 ```
 func NewTxIn(prev_tx []byte, prev_index int) (tx TxIn) {
 	return TxIn{
@@ -1107,11 +1102,11 @@ additions to `main()`
 		amount: 954070,
 	}
 ```
-Any attribute not explicitely assigned a value is given a zero default value. What we just defined above are the input and outputs of the transaction we are building. The `TxIn` references the previous transaction, in this case the transaction from the tBTC faucet to our first address. It also specifies the index of the output of this transaction that belongs to us. By checking the transaction information on the block explorer, we can see that our unspent transaction output (UTXO) was in the 1st index. The `TxOut`s we created only specify the amount. If you sum both amounts and compare this with the UTXO that the `TxIn` references, the sum of the `TxOut`s are less than the amount referenced as input. The difference between both amounts is the transaction fee that the miner claims when your transaction is successfully included in a block. Another curious thing about the Bitcoin protocol is that we don't specify an input amount but instead only reference outputs from previous transactions. A great analogy to understand this design choice is via comparison with physical cash. 
+Any attribute not explicitely assigned a value is given a value of zero by default. What we just defined above are the input and outputs of the transaction we are building. The `TxIn` references the previous transaction, which, in this case, is the transaction from the tBTC faucet to our first address. It also specifies the index of the output of this transaction that belongs to us. By checking the transaction information on the block explorer, we can see that our unspent transaction output (UTXO) was in the 1st index. The outputs we created only specify the amount. If you sum both amounts and compare this with the amount that the `TxIn` references, the sum of the outputs are less than the amount referenced as input. The difference between both amounts is the transaction fee that the miner claims when your transaction is successfully included in a block. Another curious thing about the Bitcoin protocol is that we don't specify an input amount but instead only reference outputs from previous transactions. A great analogy to understand this design choice is via a comparison with physical cash:
 
-Suppose we went to a store and bought a 20$ item with a 50$ bill. The cashier will take our 50$ and give us 30$ in change. We will assume there are no 30$ bills and instead assume we received a 20$ bill first and then a 10$ bill. Now we go to a different store and we wish to purchase a 5$ item. Using the lens of the Bitcoin protocol, to send 5$ to the shop clerk, we must first reference the past transaction we made at the first store, the one where we received 20$ and 10$. We either reference the 20$ output (index of 0) or the 10$ output (index of 1) or both. In any case, we don't try and cut the bill in quarters or in halves so that the merchant receives 5$ exactly. UTXOs, like cash, cannot be partially consumed. But we can specify what denominations of change we would like to receive. For example, I may use the 10$ bill and tell the shop clerk that I would like to receive two 2$ bills and a 1$ bill as change. In Bitcoin terms, this would mean we would have 3 `TxOuts`, 2 with an amount of 2$ and one with an amount of 1$. The great thing about Bitcoin is that a single Bitcoin can be subdivided into 100 million parts and a `TxOut` amount can be any amount of Satoshis we desire, so long as the sum total of these amounts does not exceed the referenced amount in the inputs. The `TxOut` amounts are denominated in units of 1/100 million of a Bitcoin, aka a Satoshi.
+	Suppose we went to a store and bought a 20$ item with a 50$ bill. The cashier will take our 50$ and give us 30$ in change. We will assume there are no 30$ bills and instead assume we received a 20$ bill first and then a 10$ bill. This would be like having a transaction input be the 50$ bill with three outputs, 20$ to the cashier, 20$ and 10$ back to us. Now we go to a different store and we wish to purchase a 5$ item. Using the lens of the Bitcoin protocol, to send 5$ to the shop clerk, we must first reference the past transaction we made at the first store, the one where we received 20$ and 10$. We either reference the 20$ output (index of 1) or the 10$ output (index of 2) or both. In any case, we don't try and cut the bill in quarters or in halves so that the merchant receives 5$ exactly. UTXOs, like cash, cannot be partially consumed. But we can specify what denominations of change we would like to receive. For example, I may use the 10$ bill and tell the shop clerk that I would like to receive two 2$ bills and a 1$ bill as change. In Bitcoin terms, this would mean we would have three `TxOuts`, two with an amount of 2$ and one with an amount of 1$. The great thing about Bitcoin is that a single Bitcoin can be subdivided into 100 million parts and a `TxOut` amount can be any amount we desire, so long as the sum total of these amounts does not exceed the referenced amount in the inputs. The `TxOut` amounts are denominated in units of 1/100 million of a Bitcoin, aka a Satoshi.
 
-Above, we have two `TxOut` because in the first `TxOut` is the specified amount (50 000 satoshis) being sent to our second bitcoin address. The second `TxOut` is the remaining change we are sending back to ourselves (954 070 satoshis). If we so desired, we could split our second `TxOut` into two `TxOut` each with an amount that together sums up to 954 070. If the recipient so desired, we could also split 50 000 satoshis into any combination of outputs that sum to 50 000.   
+Above, we have two `TxOut` because the first `TxOut` is the specified amount (50 000 satoshis) being sent to our second bitcoin address. The second `TxOut` is the remaining change we are sending back to ourselves (954 070 satoshis). If we so desired, we could split our second `TxOut` into two `TxOut` each with an amount that together sums up to 954 070. If the recipient so desired, we could also split 50 000 satoshis into any combination of outputs that sum to 50 000.   
 
 To broadcast a Bitcoin transaction to other nodes in the network, we must follow a standard format for encoding the transactions. Each component of a transaction has it's own specified way of being encoded. The scripts in the transactions are encoded as per the `ScriptEncode()` methods. `TxIn` and `TxOut` are encoded via the `txin_encode()` and `txout_encode()` methods, implemented below
 ```
@@ -1160,7 +1155,7 @@ func (t TxOut) txout_encode() []byte {
 	return bytes.Join(out, []byte(""))
 }
 ```
-You may be thinking "What is a script in Bitcoin?" or "How is forgery prevented in Bitcoin if a transaction is just a reference of the output of a previous transaction with new amounts? Couldn't I find any new transaction, reference it's outputs and send them to myself?". Scripts in Bitcoin are what prevent this unwanted spending and the specific script that does such a thing is called the locking script. It is effectively a cryptographic math challenge that must be succesfully completed in order to unlock the UTXO and spend it in a new transaction. The locking script uses the public key of the recipient to lock the outputs and the only way to solve this puzzle is to use the corresponding private key of the public key used to create the challenge in the first place. Below, we are going to create the locking scripts for our `TxOut`.
+You may be thinking "What is a script in Bitcoin?" or "How is forgery prevented in Bitcoin if a transaction is just a reference to the output of a previous transaction being sent elsewhere? Couldn't I find any new transaction, reference it's outputs and send them to myself?". Scripts in Bitcoin are what prevent this unwanted spending and the specific script that does such a thing is called the locking script. It is effectively a cryptographic math challenge that must be succesfully completed in order to unlock the UTXO and spend it in a new transaction. The locking script uses the public key of the recipient to lock the outputs and the only way to solve the puzzle is to use the corresponding private key of the public key used to create the challenge. Below, we are going to create the locking scripts for our `TxOut`.
 ```
 func main() {
 	...
@@ -1186,7 +1181,7 @@ func main() {
 	tx_out2.script_pubkey = out2_script
 }
 ```
-So here `out1_pkb_hash` is the hash of the public key to our second wallet. Which means our first `TxOut` will be going to our second wallet. `out2_pkb_hash` is the hash of the public key of our first wallet, which means the second `TxOut` is our change. If we look at what's outputted at the line `fmt.Printf("out2_pkb_hash hexed: %v\n", hex.EncodeToString(out2_pkb_hash))` and compare that to the locking script of the output of the testnet faucet transaction found [here](https://blockstream.info/testnet/tx/65d9d108407bc588ac0c6ee17029f261cd7f9c66edacb579bac86a04f8d3cb4a?expand) we should see the exact same value.
+So here `out1_pkb_hash` is the hash of the public key to our second wallet. Which means our first `TxOut` will be locked to our second wallet. `out2_pkb_hash` is the hash of the public key of our first wallet, which means the second `TxOut` is our change. If we look at what's output at the line `fmt.Printf("out2_pkb_hash hexed: %v\n", hex.EncodeToString(out2_pkb_hash))` and compare that to the locking script of our output on the testnet faucet transaction found [here](https://blockstream.info/testnet/tx/65d9d108407bc588ac0c6ee17029f261cd7f9c66edacb579bac86a04f8d3cb4a?expand) we should see the exact same value.
 
 Before we can unlock the referenced output and spend it in this transaction, we are going to create a struct called `Tx` which will act as a container for our `TxIn` and two `TxOut`. It will also have it's own encoding method which will encode all elements of the transaction in the proper fashion.
 ```
@@ -1242,8 +1237,8 @@ func (t Tx) TxEncode(sig_index int) []byte {
 	return bytes.Join(out, []byte(""))
 }
 ```
-To unlock the previous transaction output which belongs to us, we must create the unlock script. The unlock script has three parts:
-- A copy of the locking script, stored as the `prev_tx_script_pubkey` attribute of our `TxIn`
+To unlock the previous transaction output, we must create the unlock script. The unlock script has three parts:
+- A copy of the locking script we are unlocking, stored as the `prev_tx_script_pubkey` attribute of our `TxIn`
 - Proof that we own the private key corresponding to the specified public key referenced in the locking script
 - Approval over the transaction we are currently constructing
 
@@ -1256,7 +1251,7 @@ First, let's recreate the locking script of the previous transaction by adding t
 	}
 	tx_in.prev_tx_script_pubkey = source_script
 ```
-It's essentially a copy and paste of the locking script for out second `TxOut` (makes sense since this is the change we are sending back to ourselves). Finally, we will instantiate `Tx` in `main()`
+It's essentially a copy and paste of the locking script for our second `TxOut` (makes sense since this is the change we are sending back to ourselves). Finally, we will instantiate `Tx` in `main()`
 ```
 	tx := Tx{
 		version:  1,
@@ -1269,7 +1264,7 @@ Next, we must encode the transaction. Since we haven't yet specified the `script
 ```
 	message := tx.TxEncode(0)
 ```
-So at this point, we've copied the locking script of the transaction we are referencing to in our input. Now we must prove ownership over the referenced public key in the locking script and authorize the transaction we are constructing. To do this, we will create a cryptographic signature using our private key. Signing a known message (in this case, our encoded transaction) with a private key proves to the network that we are the owner of the associated public key without revealing what the private key is and also authorizes it. Nodes that receive our broadcasted transaction will find the signature and our public key. Then, they calculate the validity of this signature all without needing our private key to do so. Pretty neat :)
+So at this point, we've copied the locking script of the transaction we are referencing in our input. Now we must prove ownership over the referenced public key in the locking script and authorize the transaction we are constructing. To do this, we will create a cryptographic signature using our private key. Signing a known message (in this case, our encoded transaction) with a private key proves to the network that we are the owner of the associated public key without revealing what the private key is. Nodes that receive our broadcasted transaction will find the signature and our public key. Then, they calculate the validity of this signature all without needing our private key to do so. Pretty neat :)
 
 To create a cryptographic signature, we will create a `Signature` struct and a `sign()` function which takes a message, the Bitcoin generator and our private key as inputs and returns a Signature. Additionally, we will define the `sig_encode()` method for encoding our signature 
 ```
@@ -1331,7 +1326,7 @@ func (s Signature) sig_encode() []byte {
 ```
 A difficulty I experienced when translating this part of the code was in the `sign()` function where the variable `sk` is defined and assigned a value. At first, I didn't seed the random number generator which sets the value of `sk` and this would always produce this error when broadcasting my transacion `{"code":-26,"message":"mandatory-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation)"}`. When I seeded the random number generator with the sha256 hash of the message, it worked. My hunch is that `sk` is meant to be a pseudo-random value derived from our private key. Since `message` includes our public key hash, `sk` is then part of a set of random numbers associated to our private key. I know that in the `btcutil` package (an actual safe to use implementation of the Bitcoin protocol), `sk` is derived deterministically from the private key.
 
-We have completed the unlock script and we are now ready to include our signature in our transaction to perform the final encoding. To include the encoded signature (unlock script) in our transaction, we will create another `Script` struct and assign it as our `script_sig` attribute of `TxIn`.
+We have completed the unlock script and we are now ready to include our signature in the transaction to perform the final encoding. To include the encoded signature in our transaction, we will create another `Script` struct and assign it as our `script_sig` attribute of `TxIn`.
 ```
 	sig := sign(priv_key, btc_gen, message)
 	//fmt.Printf("Signature(r=%v, s=%v)\n", sig.r, sig.s)
@@ -1347,7 +1342,7 @@ We have completed the unlock script and we are now ready to include our signatur
 		cmds: script_sig_cmds,
 	}
 ```
-Finally, we will encode our completed transaction
+Finally, we will encode our completed transaction,
 ```
 	tx_bytes := tx.TxEncode(-1)
 	fmt.Printf("%s\n", hex.EncodeToString(tx_bytes))
@@ -1357,7 +1352,7 @@ Finally, we will encode our completed transaction
 ```
 copy the output of `fmt.Printf("%s\n", hex.EncodeToString(tx_bytes))` and paste it [here](https://blockstream.info/testnet/tx/push). And voila, we have succesfully created and broadcasted a Bitcoin transaction from scratch ([Proof](https://blockstream.info/testnet/tx/d1f770cdfe980eca99c18c52598fad6a1f68b8a59444e539722198914694b73e))!!! I was really happy when this finally worked. 
 
-When I was encountering difficulties with the `sign()` function, I ran the equivalent Python code and broadcasted a couple of transactions using the hex encoded output in the Python implementation. Third times the charm they say. Since I had three 50 000 satoshi UTXOs in the second address I created, I figured it would be interesting to try and craft a consolidation transaction. Just kidding, I did this accidentally when trying to send all the tBTC from both addresses back to the faucet. I will show you this happy little accident in the next part.
+When I was encountering difficulties with the `sign()` function, I ran the equivalent Python code and broadcasted a couple of transactions using the hex encoded output in the Python implementation. Third time's the charm they say. Since I had three 50 000 satoshi UTXOs in the second address I created, I figured it would be interesting to try and craft a consolidation transaction. Just kidding, I did this accidentally when trying to send all the tBTC from both addresses back to the faucet. I will show you this happy little accident in the next part.
 
 ## Part 3: Consolidation Transaction
 
@@ -1376,7 +1371,7 @@ With three 50 000 Satoshi UTXOs in the second wallet and the remainder in the fi
 		amount: 1102960,
 	}
 ```
-I only created one `TxOut` as I didn't want any change and wanted to spend the entire amount minus the transaction fee. Next I created the locking script for `TxOut`. To do this, I navigated the block explorer to find the address page of the tBTC faucet to and copied it's pubkey hash. On proper Bitcoin wallet software, all you need is the recipient address, your wallet will decode the address into a pubkey hash.
+I only created one `TxOut` as I didn't want any change and wanted to spend the entire amount minus the transaction fee. Next I created the locking script for `TxOut`. To do this, I navigated the block explorer to find the address page of the tBTC faucet address and copied it's pubkey hash. On proper Bitcoin wallet software, all you need is the recipient address, your wallet will decode the address into a pubkey hash.
 ```
 	out_pkb_hash, _ := hex.DecodeString("344a0f48ca150ec2b903817660b9b68b13a67026")
 	out_cmds := []byte{118, 169}
@@ -1430,7 +1425,7 @@ Then I assembled all these `TxIn` and `TxOut` into a `Tx` struct
 		locktime: 0,
 	}
 ```
-Here is where things start to differ. Because we have multiple `TxIn` which are unlocked by two different addresses, we must create 4 different messages to sign 4 different times, otherwise we will not solve the unlock script for each `TxIn` referenced output.
+Here is where things start to differ. Because we have multiple `TxIn` which are unlocked by two different addresses, we must create four different messages to sign four different times. Otherwise we will not solve the unlock script for each `TxIn` referenced output.
 ```
 	msg := new_tx.TxEncode(0)
 	new_sig := sign(priv_key, btc_gen, msg)
@@ -1499,9 +1494,9 @@ You can see what this consolidation transaction looks like [here](https://blocks
 
 ## Part 4: Returning Funds to the Faucet
 
-Something that I must criticize Karpathy's blog post for is not encouraging those following along to return the tBTC funds to the faucet. This is important if we wish to continue having accessible funds at these faucets. So I will show how I constructed the transaction that did just that.
+A criticism I have towards Karpathy's blog post, is not encouraging those following along to return the tBTC funds to the faucet. This is important if we wish to continue having accessible funds from these faucets. So I will show how I constructed the transaction that did just that.
 
-Again we start by defining out `TxIn` and `TxOut`.
+Again we start by defining `TxIn` and `TxOut`.
 ```
 	prev_tx, _ = hex.DecodeString("ac461b593b6b825117c33421947ede73d4f196f8250b5d82d279ef7918741ee5")
 	new_tx_in := NewTxIn(prev_tx, 0)
@@ -1516,7 +1511,7 @@ Since we just consolidated all our UTXOs into one output, we will have one `TxIn
 	}
 	new_tx_out.script_pubkey = new_out_script
 ```
-Then the unlock script and assemble it all into a `Tx` struct.
+Then define the unlock script and assemble it all into a `Tx` struct.
 ```
 	new_tx_in.prev_tx_script_pubkey = ByteScript{
 		cmds: in2_cmds,
@@ -1528,14 +1523,14 @@ Then the unlock script and assemble it all into a `Tx` struct.
 		locktime: 0,
 	}
 ```
-This time, we will only create one encoded message and sign it once with our second address
+This time, we will only create one encoded message and sign it once with our second address.
 ```
 	final_msg := final_tx.TxEncode(0)
 	final_sig := sign(priv_key2, btc_gen, final_msg)
 	final_sig_bytes := final_sig.sig_encode()
 	final_sig_bytes = append(final_sig_bytes, byte('\x01'))
 ```
-Add the encoded signature to `Tx` and encode it once more for broadcasting
+Added the encoded signature to `Tx` and encoded it once more for broadcasting
 ```
 	var final_script_sig_cmds []byte
 	final_script_sig_cmds = append(final_script_sig_cmds, []byte{byte(len(final_sig_bytes))}...)
@@ -1551,6 +1546,6 @@ Add the encoded signature to `Tx` and encode it once more for broadcasting
 	reverse(final_tx_id)
 	fmt.Printf("tx_id: %s\n", hex.EncodeToString(final_tx_id))
 ```
-And here is [that transaction](https://blockstream.info/testnet/tx/9bc54a7672a39fcf7e599c8474a01918ae1aa65aa5738a070b7a8dd77e52f503)
+And here is [that transaction](https://blockstream.info/testnet/tx/9bc54a7672a39fcf7e599c8474a01918ae1aa65aa5738a070b7a8dd77e52f503).
 
 I hope you all learned something by reading through this blog post.
