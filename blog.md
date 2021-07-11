@@ -1098,7 +1098,7 @@ func NewTxIn(prev_tx []byte, prev_index int) (tx TxIn) {
 additions to `main()`
 ```
 	prev_tx, _ := hex.DecodeString("02db4cde61cbeb96640ff8d6a12c2dd9800127e7705b60204ca61ad02f95ca80")
-    tx_in := NewTxIn(prev_tx, 1)
+	tx_in := NewTxIn(prev_tx, 1)
 	//fmt.Printf("tx_in prev_tx bytes: %v\n", len(tx_in.prev_tx))
 	tx_out1 := TxOut{
 		amount: 50000,
