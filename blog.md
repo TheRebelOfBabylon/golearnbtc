@@ -22,8 +22,8 @@ want `*big.int` for the `p` argument. I added a print statement at the end of ma
 package main
 
 import (
-  "fmt"
-  "math/big"
+	"fmt"
+	"math/big"
 )
 
 type Curve struct {
@@ -33,15 +33,15 @@ type Curve struct {
 }
 
 func main() {
-  s := "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F"
-  i := new(big.Int)
-  i.SetString(s, 16)
-  btc_curve := Curve{
-    p: i,
-    a: 0x0000000000000000000000000000000000000000000000000000000000000000,
-    b: 0x0000000000000000000000000000000000000000000000000000000000000007,
-  }
-  fmt.Printf("%v\n", btc_curve.p)
+	s := "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F"
+	i := new(big.Int)
+	i.SetString(s, 16)
+	btc_curve := Curve{
+		p: i,
+		a: 0x0000000000000000000000000000000000000000000000000000000000000000,
+		b: 0x0000000000000000000000000000000000000000000000000000000000000007,
+	}
+	fmt.Printf("%v\n", btc_curve.p)
 }
 ```
 We then define a `Point` struct and instantiate the point `G` which is a point on the Elliptic Curve used in Bitcoin's cryptography. The `Point` struct will also be used for public keys later.
@@ -72,32 +72,32 @@ Something worth mentionning about functions/methods in Go. As it is strictly typ
 Also, as I pointed out earlier, `big.Int` operations return the value to the `big.Int` that called the method unlike normal math operations, where the result can be stored in a new variable via assignment (ex: `a := 4+7`).
 ```
 func main() {
-  s := "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F"
-  i := new(big.Int)
-  i.SetString(s, 16)
-  btc_curve := Curve{
-    p: i,
-    a: 0x0000000000000000000000000000000000000000000000000000000000000000,
-    b: 0x0000000000000000000000000000000000000000000000000000000000000007,
-  }
-  //fmt.Printf("%v\n", btc_curve.p)
-  s_x := "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"
-  s_y := "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
-  i_x := new(big.Int)
-  i_y := new(big.Int)
-  i_x.SetString(s_x, 16)
-  i_y.SetString(s_y, 16)
-  G := Point{
-    curve: btc_curve,
-    x:     i_x,
-    y:     i_y,
-  }
-  //Test if generator is on the curve
-  if G.verify_on_curve(&btc_curve) {
-    fmt.Println("TRUE")
-  } else {
-    fmt.Println("FALSE")
-  }
+	s := "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F"
+	i := new(big.Int)
+	i.SetString(s, 16)
+	btc_curve := Curve{
+		p: i,
+		a: 0x0000000000000000000000000000000000000000000000000000000000000000,
+		b: 0x0000000000000000000000000000000000000000000000000000000000000007,
+	}
+	//fmt.Printf("%v\n", btc_curve.p)
+	s_x := "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"
+	s_y := "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+	i_x := new(big.Int)
+	i_y := new(big.Int)
+	i_x.SetString(s_x, 16)
+	i_y.SetString(s_y, 16)
+	G := Point{
+		curve: btc_curve,
+		x:     i_x,
+		y:     i_y,
+	}
+	//Test if generator is on the curve
+	if G.verify_on_curve(&btc_curve) {
+		fmt.Println("TRUE")
+	} else {
+		fmt.Println("FALSE")
+	}
 }
 ```
 A `Generator` struct is also defined. This data type will be used to create a valid private key.
@@ -109,41 +109,41 @@ type Generator struct {
 ```
 ```
 func main() {
-  s := "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F"
-  i := new(big.Int)
-  i.SetString(s, 16)
-  btc_curve := Curve{
-    p: i,
-    a: 0x0000000000000000000000000000000000000000000000000000000000000000,
-    b: 0x0000000000000000000000000000000000000000000000000000000000000007,
-  }
-  //fmt.Printf("%v\n", btc_curve.p)
-  s_x := "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"
-  s_y := "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
-  i_x := new(big.Int)
-  i_y := new(big.Int)
-  i_x.SetString(s_x, 16)
-  i_y.SetString(s_y, 16)
-  G := Point{
-    curve: btc_curve,
-    x:     i_x,
-    y:     i_y,
-  }
-  s_n := "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141"
-  n := new(big.Int)
-  n.SetString(s_n, 16)
-  btc_gen := Generator{
-    G: &G,
-    n: n,
-  }
-  priv_key := new(big.Int)
-  priv_key.SetBytes([]byte("btc is the future"))
-  if priv_key.Cmp(big.NewInt(1)) == 0 || priv_key.Cmp(big.NewInt(1)) == 1 {
-    if priv_key.Cmp(btc_gen.n) == -1 {
-      fmt.Println("Valid key")
-    }
-  }
-  fmt.Println(priv_key)
+	s := "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F"
+	i := new(big.Int)
+	i.SetString(s, 16)
+	btc_curve := Curve{
+		p: i,
+		a: 0x0000000000000000000000000000000000000000000000000000000000000000,
+		b: 0x0000000000000000000000000000000000000000000000000000000000000007,
+	}
+	//fmt.Printf("%v\n", btc_curve.p)
+	s_x := "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"
+	s_y := "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+	i_x := new(big.Int)
+	i_y := new(big.Int)
+	i_x.SetString(s_x, 16)
+	i_y.SetString(s_y, 16)
+	G := Point{
+		curve: btc_curve,
+		x:     i_x,
+		y:     i_y,
+	}
+	s_n := "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141"
+	n := new(big.Int)
+	n.SetString(s_n, 16)
+	btc_gen := Generator{
+		G: &G,
+		n: n,
+	}
+	priv_key := new(big.Int)
+	priv_key.SetBytes([]byte("btc is the future"))
+	if priv_key.Cmp(big.NewInt(1)) == 0 || priv_key.Cmp(big.NewInt(1)) == 1 {
+		if priv_key.Cmp(btc_gen.n) == -1 {
+		fmt.Println("Valid key")
+		}
+	}
+	fmt.Println(priv_key)
 }
 ```
 And with that we've created our private key. Notice that we can't use standard go comparison operators between `big.Int` types. Instead, the `.Cmp()` method is provided. Also notice that no matter how many times we run this script, the private key doesn't change. They are deterministically derived, in this case from the phrase "btc is the future". This would not be a strong phrase for a private key. Most well built Bitcoin wallets generate a list of 12-24 words from 1024 possible choices which are then used to derive the private key. This is a very secure method of deriving a private key as each combination of 12-24 words are one in 12^1014 - 24^1024 possibilites (well not quite as there should not be any repeating words and the last worm is a checksum and not random). But this will suit our purposes just fine.
@@ -307,7 +307,7 @@ func (p Point) double_and_add(k *big.Int) Point {
 ```
 And finally we can test if the public key created from our private key is on the curve by adding the following to `main()`
 ```
-    pk_copy := new(big.Int).Set(priv_key)
+	pk_copy := new(big.Int).Set(priv_key)
 	pub_key := G.double_and_add(pk_copy)
 	fmt.Printf("x: %v\ny: %v\n", pub_key.x, pub_key.y)
 	fmt.Printf("Pub_key is on curve? %v\n", pub_key.verify_on_curve(&btc_curve))
@@ -538,7 +538,7 @@ I found that the best way to debug in Go, especially with `big.Int` data types w
 
 I added`"bytes"` and `"encoding/hex"` packages to the import statement at the top of the file and the following lines to `main()` to test if I had successfully implemented `sha256()`
 ```
-    mt_hash := sha256([]byte(""))
+	mt_hash := sha256([]byte(""))
 	encodedStr := hex.EncodeToString(mt_hash)
 	fmt.Printf("%s\n", encodedStr)
 	test_hash := sha256([]byte("here is a random bytes message, cool right?"))
@@ -920,7 +920,7 @@ With `ripemd160()`, I decided to implement the helper functions as private funct
 
 Here are the tests I added to `main()` to test `ripemd160()`. Don't forget to add `"encoding/binary"` and `"math"` to the import statement.
 ```
-    test := ripemd160([]byte("hello this is a test"))
+	test := ripemd160([]byte("hello this is a test"))
 	test_hex := hex.EncodeToString(test)
 	fmt.Printf("%s\n", test_hex)
 	fmt.Printf("number of bytes in a RIPEMD-160 digest: %v\n", len(ripemd160([]byte(""))))
@@ -1012,7 +1012,7 @@ In Python, `[::-1]` is used to reverse the order of the indices in an array or l
 
 And finally here is the additions to `main()` to finally get our bitcoin address. Add `"reflect"` and `"strings"` packages to the import statement as well.
 ```
-    PubKey := PublicKey{
+	PubKey := PublicKey{
 		Point: pub_key,
 	}
 	address := PubKey.address("test", true)
@@ -1022,7 +1022,7 @@ And finally here is the additions to `main()` to finally get our bitcoin address
 
 [Here](https://blockstream.info/testnet/tx/65d9d108407bc588ac0c6ee17029f261cd7f9c66edacb579bac86a04f8d3cb4a) we can see our first transaction which is requesting tBTC from a Testnet faucet. We can finally start doing some more interesting things in our from scratch Bitcoin build. First we will add a few lines to `main()` to create a second Bitcoin wallet which we will send some funds to.
 ```
-    priv_key2 := new(big.Int)
+	priv_key2 := new(big.Int)
 	priv_key2.SetBytes([]byte("eth is a shitcoin"))
 	pk2_copy := new(big.Int).Set(priv_key2)
 	pub_key2 := G.double_and_add(pk2_copy)
@@ -1097,7 +1097,7 @@ func NewTxIn(prev_tx []byte, prev_index int) (tx TxIn) {
 ```
 additions to `main()`
 ```
-    prev_tx, _ := hex.DecodeString("02db4cde61cbeb96640ff8d6a12c2dd9800127e7705b60204ca61ad02f95ca80")
+	prev_tx, _ := hex.DecodeString("02db4cde61cbeb96640ff8d6a12c2dd9800127e7705b60204ca61ad02f95ca80")
     tx_in := NewTxIn(prev_tx, 1)
 	//fmt.Printf("tx_in prev_tx bytes: %v\n", len(tx_in.prev_tx))
 	tx_out1 := TxOut{
@@ -1163,8 +1163,8 @@ func (t TxOut) txout_encode() []byte {
 You may be thinking "What is a script in Bitcoin?" or "How is forgery prevented in Bitcoin if a transaction is just a reference of the output of a previous transaction with new amounts? Couldn't I find any new transaction, reference it's outputs and send them to myself?". Scripts in Bitcoin are what prevent this unwanted spending and the specific script that does such a thing is called the locking script. It is effectively a cryptographic math challenge that must be succesfully completed in order to unlock the UTXO and spend it in a new transaction. The locking script uses the public key of the recipient to lock the outputs and the only way to solve this puzzle is to use the corresponding private key of the public key used to create the challenge in the first place. Below, we are going to create the locking scripts for our `TxOut`.
 ```
 func main() {
-    ...
-    out1_pkb_hash := PubKey2.encode(true, true)
+	...
+	out1_pkb_hash := PubKey2.encode(true, true)
 	fmt.Printf("out1_pkb_hash: %v\n", out1_pkb_hash)
 	out1_cmds := []byte{118, 169}
 	out1_cmds = append(out1_cmds, []byte{byte(len(out1_pkb_hash))}...)
@@ -1249,7 +1249,7 @@ To unlock the previous transaction output which belongs to us, we must create th
 
 First, let's recreate the locking script of the previous transaction by adding the following lines to `main()`
 ```
-    out2_copy := make([]byte, len(out2_cmds))
+	out2_copy := make([]byte, len(out2_cmds))
 	copy(out2_copy, out2_cmds)
 	source_script := ByteScript{
 		cmds: out2_copy,
@@ -1258,7 +1258,7 @@ First, let's recreate the locking script of the previous transaction by adding t
 ```
 It's essentially a copy and paste of the locking script for out second `TxOut` (makes sense since this is the change we are sending back to ourselves). Finally, we will instantiate `Tx` in `main()`
 ```
-    tx := Tx{
+	tx := Tx{
 		version:  1,
 		tx_ins:   []TxIn{tx_in},
 		tx_outs:  []TxOut{tx_out1, tx_out2},
@@ -1267,7 +1267,7 @@ It's essentially a copy and paste of the locking script for out second `TxOut` (
 ```
 Next, we must encode the transaction. Since we haven't yet specified the `script_sig` attribute of `TxIn` we can't pass `-1` as our input argument to `TxEncode()`. Instead we will pass the index of the `TxOut` that belongs to the address that is authorizing this transaction, our first address. We will store the result in a variable called `message`
 ```
-message := tx.TxEncode(0)
+	message := tx.TxEncode(0)
 ```
 So at this point, we've copied the locking script of the transaction we are referencing to in our input. Now we must prove ownership over the referenced public key in the locking script and authorize the transaction we are constructing. To do this, we will create a cryptographic signature using our private key. Signing a known message (in this case, our encoded transaction) with a private key proves to the network that we are the owner of the associated public key without revealing what the private key is and also authorizes it. Nodes that receive our broadcasted transaction will find the signature and our public key. Then, they calculate the validity of this signature all without needing our private key to do so. Pretty neat :)
 
@@ -1333,7 +1333,7 @@ A difficulty I experienced when translating this part of the code was in the `si
 
 We have completed the unlock script and we are now ready to include our signature in our transaction to perform the final encoding. To include the encoded signature (unlock script) in our transaction, we will create another `Script` struct and assign it as our `script_sig` attribute of `TxIn`.
 ```
-    sig := sign(priv_key, btc_gen, message)
+	sig := sign(priv_key, btc_gen, message)
 	//fmt.Printf("Signature(r=%v, s=%v)\n", sig.r, sig.s)
 	sig_bytes := sig.sig_encode()
 	sig_bytes = append(sig_bytes, byte('\x01'))
@@ -1349,7 +1349,7 @@ We have completed the unlock script and we are now ready to include our signatur
 ```
 Finally, we will encode our completed transaction
 ```
-    tx_bytes := tx.TxEncode(-1)
+	tx_bytes := tx.TxEncode(-1)
 	fmt.Printf("%s\n", hex.EncodeToString(tx_bytes))
 	tx_id := sha256(sha256(tx_bytes))
 	reverse(tx_id)
@@ -1363,7 +1363,7 @@ When I was encountering difficulties with the `sign()` function, I ran the equiv
 
 With three 50 000 Satoshi UTXOs in the second wallet and the remainder in the first, my intention was to create a transaction using all UTXOs and sending it to a tBTC faucet. So to accomplish this, I created four `TxIn` and one `TxOut`. 
 ```
-    prev_tx, _ = hex.DecodeString("d1f770cdfe980eca99c18c52598fad6a1f68b8a59444e539722198914694b73e")
+	prev_tx, _ = hex.DecodeString("d1f770cdfe980eca99c18c52598fad6a1f68b8a59444e539722198914694b73e")
 	tx_in1 := NewTxIn(prev_tx, 1) // first wallet
 	// Second wallet
 	tx_in2 := NewTxIn(prev_tx, 0)
@@ -1378,7 +1378,7 @@ With three 50 000 Satoshi UTXOs in the second wallet and the remainder in the fi
 ```
 I only created one `TxOut` as I didn't want any change and wanted to spend the entire amount minus the transaction fee. Next I created the locking script for `TxOut`. To do this, I navigated the block explorer to find the address page of the tBTC faucet to and copied it's pubkey hash. On proper Bitcoin wallet software, all you need is the recipient address, your wallet will decode the address into a pubkey hash.
 ```
-    out_pkb_hash, _ := hex.DecodeString("344a0f48ca150ec2b903817660b9b68b13a67026")
+	out_pkb_hash, _ := hex.DecodeString("344a0f48ca150ec2b903817660b9b68b13a67026")
 	out_cmds := []byte{118, 169}
 	out_cmds = append(out_cmds, []byte{byte(len(out_pkb_hash))}...)
 	out_cmds = append(out_cmds, out_pkb_hash...)
@@ -1390,7 +1390,7 @@ I only created one `TxOut` as I didn't want any change and wanted to spend the e
 ```
 As you can see, I accidentally referenced `out1_cmds` and not `out_cmds` which means the UTXO of this transaction will be locked to our second address and not the tBTC faucet address. Oh well, this now becomes a consolidation transaction where we destroy many UTXOs and create one larger UTXO. After creating the locking script, I then created the unlock scripts for all the inputs.
 ```
-    in1_pkb_hash := PubKey.encode(true, true)
+	in1_pkb_hash := PubKey.encode(true, true)
 	in1_cmds := []byte{118, 169}
 	in1_cmds = append(in1_cmds, []byte{byte(len(in1_pkb_hash))}...)
 	in1_cmds = append(in1_cmds, in1_pkb_hash...)
@@ -1423,7 +1423,7 @@ As you can see, I accidentally referenced `out1_cmds` and not `out_cmds` which m
 ```
 Then I assembled all these `TxIn` and `TxOut` into a `Tx` struct
 ```
-    new_tx := Tx{
+	new_tx := Tx{
 		version:  1,
 		tx_ins:   []TxIn{tx_in1, tx_in2, tx_in3, tx_in4},
 		tx_outs:  []TxOut{tx_out},
@@ -1432,7 +1432,7 @@ Then I assembled all these `TxIn` and `TxOut` into a `Tx` struct
 ```
 Here is where things start to differ. Because we have multiple `TxIn` which are unlocked by two different addresses, we must create 4 different messages to sign 4 different times, otherwise we will not solve the unlock script for each `TxIn` referenced output.
 ```
-    msg := new_tx.TxEncode(0)
+	msg := new_tx.TxEncode(0)
 	new_sig := sign(priv_key, btc_gen, msg)
 	new_sig_bytes := new_sig.sig_encode()
 	new_sig_bytes = append(new_sig_bytes, byte('\x01'))
@@ -1447,7 +1447,7 @@ Here is where things start to differ. Because we have multiple `TxIn` which are 
 ```
 So the first address signs the `TxIn` at the 0th index. Then the second address will sign the rest of them.
 ```
-    msg = new_tx.TxEncode(1)
+	msg = new_tx.TxEncode(1)
 	new_sig2 := sign(priv_key2, btc_gen, msg)
 	new_sig_bytes2 := new_sig2.sig_encode()
 	new_sig_bytes2 = append(new_sig_bytes2, byte('\x01'))
@@ -1489,7 +1489,7 @@ So the first address signs the `TxIn` at the 0th index. Then the second address 
 ```
 And then we encode our transaction and broadcast it.
 ```
-    new_tx_bytes := new_tx.TxEncode(-1)
+	new_tx_bytes := new_tx.TxEncode(-1)
 	fmt.Printf("%s\n", hex.EncodeToString(new_tx_bytes))
 	new_tx_id := sha256(sha256(new_tx_bytes))
 	reverse(new_tx_id)
@@ -1503,7 +1503,7 @@ Something that I must criticize Karpathy's blog post for is not encouraging thos
 
 Again we start by defining out `TxIn` and `TxOut`.
 ```
-    prev_tx, _ = hex.DecodeString("ac461b593b6b825117c33421947ede73d4f196f8250b5d82d279ef7918741ee5")
+	prev_tx, _ = hex.DecodeString("ac461b593b6b825117c33421947ede73d4f196f8250b5d82d279ef7918741ee5")
 	new_tx_in := NewTxIn(prev_tx, 0)
 	new_tx_out := TxOut{
 		amount: 1101850,
@@ -1511,14 +1511,14 @@ Again we start by defining out `TxIn` and `TxOut`.
 ```
 Since we just consolidated all our UTXOs into one output, we will have one `TxIn` and one `TxOut`. Pretty simple. Then we create the locking script for `TxOut`. Remember to lock it to the pubkey hash of the faucet and not one of your own pubkey hashes.
 ```
-    new_out_script := ByteScript{
+	new_out_script := ByteScript{
 		cmds: out_cmds, //now we use the out script we created earlier
 	}
 	new_tx_out.script_pubkey = new_out_script
 ```
 Then the unlock script and assemble it all into a `Tx` struct.
 ```
-    new_tx_in.prev_tx_script_pubkey = ByteScript{
+	new_tx_in.prev_tx_script_pubkey = ByteScript{
 		cmds: in2_cmds,
 	}
 	final_tx := Tx{
@@ -1530,14 +1530,14 @@ Then the unlock script and assemble it all into a `Tx` struct.
 ```
 This time, we will only create one encoded message and sign it once with our second address
 ```
-    final_msg := final_tx.TxEncode(0)
+	final_msg := final_tx.TxEncode(0)
 	final_sig := sign(priv_key2, btc_gen, final_msg)
 	final_sig_bytes := final_sig.sig_encode()
 	final_sig_bytes = append(final_sig_bytes, byte('\x01'))
 ```
 Add the encoded signature to `Tx` and encode it once more for broadcasting
 ```
-    var final_script_sig_cmds []byte
+	var final_script_sig_cmds []byte
 	final_script_sig_cmds = append(final_script_sig_cmds, []byte{byte(len(final_sig_bytes))}...)
 	final_script_sig_cmds = append(final_script_sig_cmds, final_sig_bytes...)
 	final_script_sig_cmds = append(final_script_sig_cmds, []byte{byte(len(pubkey2_bytes))}...)
