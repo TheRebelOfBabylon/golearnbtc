@@ -1,5 +1,5 @@
 # Introduction
-The two goals I had in mind when deciding to translate the from-scratch Python implementation of BTC that Andrej Karpathy made were: learning a new coding language, namely Go, and getting a technical familiarity with Bitcoin.
+The two goals I had in mind when deciding to translate the [from-scratch Python implementation of BTC](https://karpathy.github.io/2021/06/21/blockchain/) that Andrej Karpathy made were: learning a new coding language, namely Go, and getting a technical familiarity with Bitcoin.
 
 Please keep in mind that this code won't be pretty, and will evolve over the course of the blog post. I will be highlighting some of the challenges I faced when translating this code, and I will be sharing little nuggets of information discovered along the way. 
 
