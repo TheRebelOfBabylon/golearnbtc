@@ -256,7 +256,7 @@ As I mentioned above, there are no Dunder method equivalents in Go so we can't c
 
 To test if this was properly implemented, we can try adding private keys with values of `1`, `2` and `3` to `G` using `elliptic_curve_addition()` and then testing if the resulting public keys are on the curve by adding the following to `main()`
 ```
-    pk := G
+	pk := G
 	if pk.verify_on_curve(&btc_curve) {
 		fmt.Println("pk valid")
 	} else {
